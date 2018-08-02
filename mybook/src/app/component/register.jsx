@@ -1,249 +1,190 @@
 import React from 'react';
-import { Form, Input, Tooltip, Icon, Cascader, Select, Row, Col, Checkbox, Button, AutoComplete } from 'antd';
+import { Form, Input, Button } from 'antd';
 
 const FormItem = Form.Item;
-const Option = Select.Option;
-const AutoCompleteOption = AutoComplete.Option;
-
-const residences = [{
-  value: 'zhejiang',
-  label: 'Zhejiang',
-  children: [{
-    value: 'hangzhou',
-    label: 'Hangzhou',
-    children: [{
-      value: 'xihu',
-      label: 'West Lake',
-    }],
-  }],
-}, {
-  value: 'jiangsu',
-  label: 'Jiangsu',
-  children: [{
-    value: 'nanjing',
-    label: 'Nanjing',
-    children: [{
-      value: 'zhonghuamen',
-      label: 'Zhong Hua Men',
-    }],
-  }],
-}];
 
 class RegistrationForm extends React.Component {
-  state = {
-    confirmDirty: false,
-    autoCompleteResult: [],
-  };
+	state = {
+		confirmDirty: false,
+		autoCompleteResult: [],
+		captcha:"jfi7",
+		canvas:""
+	};
+	constructor(){
+		super();
+		this.captcha = "dfgr";
+	}
+	handleSubmit = (e) => {
+		e.preventDefault();
+		this.props.form.validateFieldsAndScroll((err, values) => {
+			if (!err) {
+				console.log('Received values of form: ', values);
+				console.log(this.props)
+				this.props.history.push('/verify')
+			}
+		});
+	}
 
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        console.log('Received values of form: ', values);
-      }
-    });
-  }
+	handleConfirmBlur = (e) => {
+		const value = e.target.value;
+		this.setState({ confirmDirty: this.state.confirmDirty || !!value });
+	}
 
-  handleConfirmBlur = (e) => {
-    const value = e.target.value;
-    this.setState({ confirmDirty: this.state.confirmDirty || !!value });
-  }
+	handleCaptchaBlur = (e) => {
+		const value = e.target.value;
+		// this.setState({ confirmDirty: this.state.confirmDirty || !!value , captcha:"serw"});
+		this.captcha = "serw";
+		// this.forceUpdate();
+		this.drawCanvas();
+	}
+	compareToFirstPassword = (rule, value, callback) => {
+		const form = this.props.form;
+		if (value && value !== form.getFieldValue('password')) {
+			callback('Two passwords that you enter is inconsistent!');
+		} else {
+			callback();
+		}
+	}
 
-  compareToFirstPassword = (rule, value, callback) => {
-    const form = this.props.form;
-    if (value && value !== form.getFieldValue('password')) {
-      callback('Two passwords that you enter is inconsistent!');
-    } else {
-      callback();
-    }
-  }
+	compareCaptcha = (rule, value, callback) => {
+		if(value && value !== this.captcha){
+			callback("请输入正确的验证码！");
+		}else{
+			callback();
+		}
+	}
 
-  validateToNextPassword = (rule, value, callback) => {
-    const form = this.props.form;
-    if (value && this.state.confirmDirty) {
-      form.validateFields(['confirm'], { force: true });
-    }
-    callback();
-  }
+	validateToNextPassword = (rule, value, callback) => {
+		const form = this.props.form;
+		if (value && this.state.confirmDirty) {
+			form.validateFields(['confirm'], { force: true });
+		}
+		callback();
+	}
+	drawCanvas = (canvas) => {
+		let ctx = null;
+		if (!canvas) { 
+			ctx=this.state.canvas.getContext("2d");
+			ctx.clearRect(0,0,600,67)
 
-  handleWebsiteChange = (value) => {
-    let autoCompleteResult;
-    if (!value) {
-      autoCompleteResult = [];
-    } else {
-      autoCompleteResult = ['.com', '.org', '.net'].map(domain => `${value}${domain}`);
-    }
-    this.setState({ autoCompleteResult });
-  }
+		}else{
+			ctx=canvas.getContext("2d");
+			this.setState({canvas:canvas})
+			
+		}
+		console.log(canvas)
+		// this._canvas = canvas;
+		ctx.fillStyle="#fff";
+		ctx.fillRect(0,0,120,120)
+		var c=this.captcha//随机的字
+		const fs=36;//字体的大小
+		const deg=22;//字体的旋转角度
+		ctx.font=fs+'px Simhei';
+		ctx.textBaseline="top";
+		ctx.fillStyle="#000";
+		ctx.save();
+		ctx.translate(30*10+15,15);
+		ctx.rotate(deg*Math.PI/180);
+		ctx.fillText(c,-15+5,-15);
+		ctx.restore();
+	}
+	render() {
+		const { getFieldDecorator } = this.props.form;
 
-  render() {
-    const { getFieldDecorator } = this.props.form;
-    const { autoCompleteResult } = this.state;
-
-    const formItemLayout = {
-      labelCol: {
-        xs: { span: 24 },
-        sm: { span: 8 },
-      },
-      wrapperCol: {
-        xs: { span: 24 },
-        sm: { span: 16 },
-      },
-    };
-    const tailFormItemLayout = {
-      wrapperCol: {
-        xs: {
-          span: 24,
-          offset: 0,
-        },
-        sm: {
-          span: 16,
-          offset: 8,
-        },
-      },
-    };
-    const prefixSelector = getFieldDecorator('prefix', {
-      initialValue: '86',
-    })(
-      <Select style={{ width: 70 }}>
-        <Option value="86">+86</Option>
-        <Option value="87">+87</Option>
-      </Select>
-    );
-
-    const websiteOptions = autoCompleteResult.map(website => (
-      <AutoCompleteOption key={website}>{website}</AutoCompleteOption>
-    ));
-
-    return (
-      <Form onSubmit={this.handleSubmit}>
-        <FormItem
-          {...formItemLayout}
-          label="E-mail"
-        >
-          {getFieldDecorator('email', {
-            rules: [{
-              type: 'email', message: 'The input is not valid E-mail!',
-            }, {
-              required: true, message: 'Please input your E-mail!',
-            }],
-          })(
-            <Input />
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label="Password"
-        >
-          {getFieldDecorator('password', {
-            rules: [{
-              required: true, message: 'Please input your password!',
-            }, {
-              validator: this.validateToNextPassword,
-            }],
-          })(
-            <Input type="password" />
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label="Confirm Password"
-        >
-          {getFieldDecorator('confirm', {
-            rules: [{
-              required: true, message: 'Please confirm your password!',
-            }, {
-              validator: this.compareToFirstPassword,
-            }],
-          })(
-            <Input type="password" onBlur={this.handleConfirmBlur} />
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label={(
-            <span>
-              Nickname&nbsp;
-              <Tooltip title="What do you want others to call you?">
-                <Icon type="question-circle-o" />
-              </Tooltip>
-            </span>
-          )}
-        >
-          {getFieldDecorator('nickname', {
-            rules: [{ required: true, message: 'Please input your nickname!', whitespace: true }],
-          })(
-            <Input />
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label="Habitual Residence"
-        >
-          {getFieldDecorator('residence', {
-            initialValue: ['zhejiang', 'hangzhou', 'xihu'],
-            rules: [{ type: 'array', required: true, message: 'Please select your habitual residence!' }],
-          })(
-            <Cascader options={residences} />
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label="Phone Number"
-        >
-          {getFieldDecorator('phone', {
-            rules: [{ required: true, message: 'Please input your phone number!' }],
-          })(
-            <Input addonBefore={prefixSelector} style={{ width: '100%' }} />
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label="Website"
-        >
-          {getFieldDecorator('website', {
-            rules: [{ required: true, message: 'Please input website!' }],
-          })(
-            <AutoComplete
-              dataSource={websiteOptions}
-              onChange={this.handleWebsiteChange}
-              placeholder="website"
-            >
-              <Input />
-            </AutoComplete>
-          )}
-        </FormItem>
-        <FormItem
-          {...formItemLayout}
-          label="Captcha"
-          extra="We must make sure that your are a human."
-        >
-          <Row gutter={8}>
-            <Col span={12}>
-              {getFieldDecorator('captcha', {
-                rules: [{ required: true, message: 'Please input the captcha you got!' }],
-              })(
-                <Input />
-              )}
-            </Col>
-            <Col span={12}>
-              <Button>Get captcha</Button>
-            </Col>
-          </Row>
-        </FormItem>
-        <FormItem {...tailFormItemLayout}>
-          {getFieldDecorator('agreement', {
-            valuePropName: 'checked',
-          })(
-            <Checkbox>I have read the <a href="">agreement</a></Checkbox>
-          )}
-        </FormItem>
-        <FormItem {...tailFormItemLayout}>
-          <Button type="primary" htmlType="submit">Register</Button>
-        </FormItem>
-      </Form>
-    );
-  }
+		const formItemLayout = {
+			labelCol: {
+				xs: { span: 24 },
+				sm: { span: 8 },
+			},
+			wrapperCol: {
+				xs: { span: 24 },
+				sm: { span: 16 },
+			},
+		};
+		const tailFormItemLayout = {
+			wrapperCol: {
+				xs: {
+					span: 24,
+					offset: 0,
+				},
+				sm: {
+					span: 16,
+					offset: 8,
+				},
+			},
+		};
+		return (
+			<Form onSubmit={this.handleSubmit}>
+				<FormItem
+					{...formItemLayout}
+					label="E-mail"
+				>
+					{getFieldDecorator('email', {
+						rules: [{
+							type: 'email', message: 'The input is not valid E-mail!',
+						}, {
+							required: true, message: 'Please input your E-mail!',
+						}],
+					})(
+						<Input />
+					)}
+				</FormItem>
+				<FormItem
+					{...formItemLayout}
+					label="Password"
+				>
+					{getFieldDecorator('password', {
+						rules: [{
+							required: true, message: 'Please input your password!',
+						}, {
+							validator: this.validateToNextPassword,
+						}],
+					})(
+						<Input type="password" />
+					)}
+				</FormItem>
+				<FormItem
+					{...formItemLayout}
+					label="Confirm Password"
+				>
+					{getFieldDecorator('confirm', {
+						rules: [{
+							required: true, message: 'Please confirm your password!',
+						}, {
+							validator: this.compareToFirstPassword,
+						}],
+					})(
+						<Input type="password" onBlur={this.handleConfirmBlur} />
+					)}
+				</FormItem>
+				<FormItem
+					{...formItemLayout}
+					label="验证码"
+				>
+					{getFieldDecorator('captcha', {
+						rules: [{
+							required: true, message: '请输入验证码!',
+						}, {
+							validator: this.compareCaptcha,
+						}],
+					})(
+						<Input />
+					)}
+				</FormItem>
+				<FormItem>
+					<canvas ref={this.drawCanvas} width="600" height="67" onClick={this.handleCaptchaBlur}></canvas>
+				</FormItem>
+				<FormItem {...formItemLayout}>
+					
+						<label>单击注册，表示同意<a href="">agreement</a></label>
+					
+				</FormItem>
+				<FormItem {...tailFormItemLayout}>
+					<Button type="primary" htmlType="submit">Register</Button>
+				</FormItem>
+			</Form>
+		);
+	}
 }
 
 const WrappedRegistrationForm = Form.create()(RegistrationForm);
