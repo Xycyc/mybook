@@ -32,10 +32,9 @@ class RegistrationForm extends React.Component {
 
 	handleCaptchaBlur = (e) => {
 		const value = e.target.value;
-		// this.setState({ confirmDirty: this.state.confirmDirty || !!value , captcha:"serw"});
 		this.captcha = "serw";
-		// this.forceUpdate();
 		this.drawCanvas();
+		this.props.form.validateFields(['captcha'],{ force:true})
 	}
 	compareToFirstPassword = (rule, value, callback) => {
 		const form = this.props.form;
@@ -61,6 +60,13 @@ class RegistrationForm extends React.Component {
 		}
 		callback();
 	}
+	validateEmail = (rule,value,callback)=>{
+		if(value && value == "sdf@163.com"){
+			callback("邮箱已注册！");
+		}else{
+			callback();
+		}
+	}
 	drawCanvas = (canvas) => {
 		let ctx = null;
 		if (!canvas) { 
@@ -70,7 +76,6 @@ class RegistrationForm extends React.Component {
 		}else{
 			ctx=canvas.getContext("2d");
 			this.setState({canvas:canvas})
-			
 		}
 		console.log(canvas)
 		// this._canvas = canvas;
@@ -124,6 +129,8 @@ class RegistrationForm extends React.Component {
 							type: 'email', message: 'The input is not valid E-mail!',
 						}, {
 							required: true, message: 'Please input your E-mail!',
+						},{
+							validator:this.validateEmail,
 						}],
 					})(
 						<Input />
